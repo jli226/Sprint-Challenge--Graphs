@@ -17,7 +17,7 @@ world = World()
 map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
-room_graph=literal_eval(open(map_file, "r").read())
+room_graph = literal_eval(open(map_file, "r").read())
 world.load_graph(room_graph)
 
 # Print an ASCII map
@@ -29,6 +29,71 @@ player = Player(world.starting_room)
 # traversal_path = ['n', 'n']
 traversal_path = []
 
+# Returns the opposite direction (i.e. 'n' -> 's')
+
+
+def get_opposite_direction(direction):
+    if direction == 'n':
+        return 's'
+    elif direction == 's':
+        return 'n'
+    elif direction == 'w':
+        return 'e'
+    elif direction == 'e':
+        return 'w'
+
+# Generates a travelsal path to explore all rooms
+
+
+def generate_travelsal_path(graph):
+    # Container for generated path
+    generated_path = []
+    # Container used for backtracking
+    backtrack = []
+    # Track visited rooms
+    visited = {}
+    # Track unexplored paths
+    unexplored = {}
+
+    # Run while there are unexplored rooms
+    while len(visited) < len(room_graph):
+        # Add the starting point to visited and unexplored
+        if len(visited) == 0:
+            current_room = player.current_room.id
+            current_exits = player.current_room.get_exits()
+            # room: {0: ['n', 's', 'w', 'e']}
+            visited[current_room] = current_exits
+            # unexplored: {0: ['n', 's', 'w', 'e']}
+            unexplored[current_room] = current_exits
+
+        # Check to see if the current room has been visited
+        if player.current_room.id not in visited:
+            # Add the current room to unexplored and visited
+            visited[player.current_room.id] = player.current_room.get_exits()
+            unexplored[player.current_room.id] = player.current_room.get_exits()
+
+        # If there's no more directions to go in the current room, then backtrack
+        while len(unexplored[player.current_room.id]) < 1:
+            opposite_direction = backtrack.pop()
+            generated_path.append(opposite_direction)
+            player.travel(opposite_direction)
+
+        # Grab a directiom to move in
+        move = unexplored[player.current_room.id].pop()
+        # Add it to the path
+        generated_path.append(move)
+        # Add the opposite of the move to the backtrack list
+        # this is used to help backtrack when there aren't any new rooms to check in the current room
+        backtrack.append(get_opposite_direction(move))
+        # Moves the player to the room to update the current room
+        player.travel(move)
+
+    # Returns a list of directions
+    return generated_path
+
+
+# Update travelsal_path
+traversal_path.extend(generate_travelsal_path(room_graph))
 
 
 # TRAVERSAL TEST
@@ -41,22 +106,22 @@ for move in traversal_path:
     visited_rooms.add(player.current_room)
 
 if len(visited_rooms) == len(room_graph):
-    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+    print(
+        f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
 else:
     print("TESTS FAILED: INCOMPLETE TRAVERSAL")
     print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
 
 
-
 #######
 # UNCOMMENT TO WALK AROUND
 #######
-player.current_room.print_room_description(player)
-while True:
-    cmds = input("-> ").lower().split(" ")
-    if cmds[0] in ["n", "s", "e", "w"]:
-        player.travel(cmds[0], True)
-    elif cmds[0] == "q":
-        break
-    else:
-        print("I did not understand that command.")
+# player.current_room.print_room_description(player)
+# while True:
+#     cmds = input("-> ").lower().split(" ")
+#     if cmds[0] in ["n", "s", "e", "w"]:
+#         player.travel(cmds[0], True)
+#     elif cmds[0] == "q":
+#         break
+#     else:
+#         print("I did not understand that command.")
